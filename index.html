@@ -1,0 +1,7906 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<meta
+    name="theme-color"
+    content="#f5f7fb"
+>
+
+<title>Route Reconstruction</title>
+
+
+<!-- =========================================================
+     LEAFLET
+========================================================= -->
+
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+
+<style>
+
+/* =========================================================
+   RESET
+========================================================= */
+
+* {
+
+    box-sizing: border-box;
+
+    -webkit-tap-highlight-color:
+        transparent;
+
+}
+
+
+html,
+body {
+
+    margin: 0;
+    padding: 0;
+
+    width: 100%;
+    height: 100%;
+
+    overflow: hidden;
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "SF Pro Display",
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+
+    background:
+        #f5f7fb;
+
+    color:
+        #172033;
+
+}
+
+
+/* =========================================================
+   APP
+========================================================= */
+
+#app {
+
+    position:
+        relative;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+}
+
+
+/* =========================================================
+   MAP
+========================================================= */
+
+#map {
+
+    position:
+        absolute;
+
+    inset:
+        0;
+
+    z-index:
+        1;
+
+}
+
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.topbar {
+
+    position:
+        absolute;
+
+    top:
+        14px;
+
+    left:
+        14px;
+
+    right:
+        14px;
+
+    z-index:
+        1000;
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        flex-start;
+
+    pointer-events:
+        none;
+
+}
+
+
+.title-card {
+
+    pointer-events:
+        auto;
+
+    padding:
+        11px 15px;
+
+    background:
+        rgba(255,255,255,.94);
+
+    backdrop-filter:
+        blur(18px);
+
+    -webkit-backdrop-filter:
+        blur(18px);
+
+    border-radius:
+        16px;
+
+    box-shadow:
+        0 8px 30px rgba(0,0,0,.12);
+
+}
+
+
+.title {
+
+    font-size:
+        15px;
+
+    font-weight:
+        750;
+
+}
+
+
+.subtitle {
+
+    margin-top:
+        2px;
+
+    font-size:
+        11px;
+
+    color:
+        #697386;
+
+}
+
+
+.map-buttons {
+
+    display:
+        flex;
+
+    gap:
+        7px;
+
+    pointer-events:
+        auto;
+
+}
+
+
+.map-button {
+
+    width:
+        44px;
+
+    height:
+        44px;
+
+    border:
+        none;
+
+    border-radius:
+        14px;
+
+    background:
+        rgba(255,255,255,.95);
+
+    box-shadow:
+        0 8px 25px rgba(0,0,0,.13);
+
+    font-size:
+        19px;
+
+    cursor:
+        pointer;
+
+    transition:
+        transform .15s ease;
+
+}
+
+
+.map-button:active {
+
+    transform:
+        scale(.92);
+
+}
+
+
+/* =========================================================
+   HELP
+========================================================= */
+
+.help {
+
+    position:
+        absolute;
+
+    top:
+        76px;
+
+    left:
+        50%;
+
+    transform:
+        translateX(-50%);
+
+    z-index:
+        1500;
+
+    padding:
+        9px 14px;
+
+    border-radius:
+        999px;
+
+    background:
+        rgba(23,32,51,.92);
+
+    color:
+        white;
+
+    font-size:
+        12px;
+
+    white-space:
+        nowrap;
+
+    opacity:
+        0;
+
+    pointer-events:
+        none;
+
+    transition:
+        opacity .2s ease;
+
+}
+
+
+.help.show {
+
+    opacity:
+        1;
+
+}
+
+
+/* =========================================================
+   MODE BAR
+========================================================= */
+
+.modebar {
+
+    position:
+        absolute;
+
+    left:
+        50%;
+
+    bottom:
+        18px;
+
+    transform:
+        translateX(-50%);
+
+    z-index:
+        1000;
+
+    display:
+        flex;
+
+    gap:
+        5px;
+
+    padding:
+        7px;
+
+    background:
+        rgba(255,255,255,.95);
+
+    backdrop-filter:
+        blur(20px);
+
+    -webkit-backdrop-filter:
+        blur(20px);
+
+    border-radius:
+        20px;
+
+    box-shadow:
+        0 10px 35px rgba(0,0,0,.16);
+
+}
+
+
+.mode-button {
+
+    min-width:
+        67px;
+
+    height:
+        50px;
+
+    border:
+        none;
+
+    border-radius:
+        15px;
+
+    background:
+        transparent;
+
+    color:
+        #566174;
+
+    font-size:
+        11px;
+
+    font-weight:
+        650;
+
+    cursor:
+        pointer;
+
+}
+
+
+.mode-button .icon {
+
+    display:
+        block;
+
+    margin-bottom:
+        2px;
+
+    font-size:
+        20px;
+
+    line-height:
+        22px;
+
+}
+
+
+.mode-button.active {
+
+    background:
+        #172033;
+
+    color:
+        white;
+
+}
+
+
+/* =========================================================
+   INFO
+========================================================= */
+
+.info-card {
+
+    position:
+        absolute;
+
+    right:
+        14px;
+
+    bottom:
+        95px;
+
+    z-index:
+        800;
+
+    max-width:
+        250px;
+
+    padding:
+        10px 12px;
+
+    background:
+        rgba(255,255,255,.90);
+
+    backdrop-filter:
+        blur(15px);
+
+    -webkit-backdrop-filter:
+        blur(15px);
+
+    border-radius:
+        13px;
+
+    box-shadow:
+        0 6px 22px rgba(0,0,0,.11);
+
+    font-size:
+        10px;
+
+    line-height:
+        1.5;
+
+    color:
+        #6b7280;
+
+}
+
+
+/* =========================================================
+   OVERLAY
+========================================================= */
+
+.overlay {
+
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    z-index:
+        3000;
+
+    display:
+        none;
+
+    align-items:
+        flex-end;
+
+    background:
+        rgba(0,0,0,.28);
+
+    backdrop-filter:
+        blur(3px);
+
+    -webkit-backdrop-filter:
+        blur(3px);
+
+}
+
+
+.overlay.show {
+
+    display:
+        flex;
+
+}
+
+
+/* =========================================================
+   SHEET
+========================================================= */
+
+.sheet {
+
+    width:
+        min(540px, 100%);
+
+    max-height:
+        90vh;
+
+    overflow-y:
+        auto;
+
+    background:
+        white;
+
+    border-radius:
+        24px 24px 0 0;
+
+    padding:
+        18px
+        18px
+        calc(
+            18px +
+            env(safe-area-inset-bottom)
+        );
+
+    box-shadow:
+        0 -10px 40px rgba(0,0,0,.18);
+
+    animation:
+        sheetUp .22s ease;
+
+}
+
+
+@keyframes sheetUp {
+
+    from {
+
+        transform:
+            translateY(100%);
+
+    }
+
+    to {
+
+        transform:
+            translateY(0);
+
+    }
+
+}
+
+
+.sheet-handle {
+
+    width:
+        38px;
+
+    height:
+        4px;
+
+    margin:
+        0 auto 15px;
+
+    background:
+        #d7dbe3;
+
+    border-radius:
+        999px;
+
+}
+
+
+.sheet-title {
+
+    margin-bottom:
+        17px;
+
+    font-size:
+        20px;
+
+    font-weight:
+        750;
+
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.field {
+
+    margin-bottom:
+        14px;
+
+}
+
+
+.field label {
+
+    display:
+        block;
+
+    margin-bottom:
+        6px;
+
+    font-size:
+        12px;
+
+    font-weight:
+        700;
+
+    color:
+        #697386;
+
+}
+
+
+.field input,
+.field textarea,
+.field select {
+
+    width:
+        100%;
+
+    border:
+        1px solid #dce1e9;
+
+    border-radius:
+        13px;
+
+    padding:
+        12px 13px;
+
+    outline:
+        none;
+
+    background:
+        #f8f9fb;
+
+    font-size:
+        16px;
+
+    font-family:
+        inherit;
+
+}
+
+
+.field textarea {
+
+    min-height:
+        240px;
+
+    resize:
+        vertical;
+
+    font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        Monaco,
+        Consolas,
+        monospace;
+
+    font-size:
+        12px;
+
+    line-height:
+        1.55;
+
+}
+
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+
+    border-color:
+        #7b879c;
+
+    background:
+        white;
+
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.actions {
+
+    display:
+        flex;
+
+    gap:
+        9px;
+
+    margin-top:
+        17px;
+
+}
+
+
+.action-button {
+
+    flex:
+        1;
+
+    min-height:
+        48px;
+
+    border:
+        none;
+
+    border-radius:
+        14px;
+
+    font-size:
+        13px;
+
+    font-weight:
+        700;
+
+    cursor:
+        pointer;
+
+}
+
+
+.cancel-button {
+
+    background:
+        #eef1f5;
+
+    color:
+        #303949;
+
+}
+
+
+.save-button {
+
+    background:
+        #172033;
+
+    color:
+        white;
+
+}
+
+
+.delete-button {
+
+    background:
+        #ffe8e8;
+
+    color:
+        #d92d20;
+
+}
+
+
+.secondary-button {
+
+    background:
+        #e9f1ff;
+
+    color:
+        #1769d2;
+
+}
+
+
+/* =========================================================
+   JSON
+========================================================= */
+
+.json-count {
+
+    margin:
+        -7px 0 13px;
+
+    font-size:
+        11px;
+
+    color:
+        #7a8494;
+
+}
+
+
+.copy-status {
+
+    min-height:
+        17px;
+
+    margin-top:
+        7px;
+
+    font-size:
+        11px;
+
+    text-align:
+        center;
+
+    color:
+        #22a06b;
+
+}
+
+
+/* =========================================================
+   COLOR
+========================================================= */
+
+.color-row {
+
+    display:
+        flex;
+
+    gap:
+        8px;
+
+    flex-wrap:
+        wrap;
+
+}
+
+
+.color-option {
+
+    width:
+        34px;
+
+    height:
+        34px;
+
+    padding:
+        0;
+
+    border:
+        3px solid white;
+
+    border-radius:
+        50%;
+
+    box-shadow:
+        0 0 0 1px #d4d9e1;
+
+    cursor:
+        pointer;
+
+}
+
+
+.color-option.selected {
+
+    box-shadow:
+        0 0 0 3px #172033;
+
+}
+
+
+/* =========================================================
+   POINT
+========================================================= */
+
+.custom-point {
+
+    width:
+        28px;
+
+    height:
+        28px;
+
+    border:
+        4px solid #1d74f5;
+
+    border-radius:
+        50%;
+
+    background:
+        white;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,.25);
+
+}
+
+
+/* =========================================================
+   ARROW
+========================================================= */
+
+.route-arrow-icon {
+
+    background:
+        transparent !important;
+
+    border:
+        none !important;
+
+}
+
+
+/* =========================================================
+   LINE DRAW BAR
+========================================================= */
+
+.line-editor {
+
+    position:
+        absolute;
+
+    left:
+        50%;
+
+    bottom:
+        90px;
+
+    transform:
+        translateX(-50%);
+
+    z-index:
+        1600;
+
+    display:
+        none;
+
+    gap:
+        6px;
+
+    padding:
+        8px;
+
+    background:
+        rgba(255,255,255,.96);
+
+    border-radius:
+        17px;
+
+    box-shadow:
+        0 8px 30px rgba(0,0,0,.17);
+
+}
+
+
+.line-editor.show {
+
+    display:
+        flex;
+
+}
+
+
+.line-editor button {
+
+    border:
+        none;
+
+    padding:
+        10px 13px;
+
+    border-radius:
+        11px;
+
+    background:
+        #eef1f5;
+
+    font-size:
+        12px;
+
+    font-weight:
+        700;
+
+    cursor:
+        pointer;
+
+}
+
+
+/* =========================================================
+   EXPORT OPTIONS
+========================================================= */
+
+.export-description {
+
+    padding:
+        12px;
+
+    border-radius:
+        13px;
+
+    background:
+        #f5f7fb;
+
+    color:
+        #697386;
+
+    font-size:
+        12px;
+
+    line-height:
+        1.6;
+
+    margin-bottom:
+        15px;
+
+}
+
+
+.export-option {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        10px;
+
+    padding:
+        12px 13px;
+
+    border:
+        1px solid #dce1e9;
+
+    border-radius:
+        13px;
+
+    margin-bottom:
+        9px;
+
+    cursor:
+        pointer;
+
+}
+
+
+.export-option input {
+
+    width:
+        18px;
+
+    height:
+        18px;
+
+}
+
+
+.export-option strong {
+
+    display:
+        block;
+
+    font-size:
+        13px;
+
+}
+
+
+.export-option span {
+
+    display:
+        block;
+
+    margin-top:
+        2px;
+
+    font-size:
+        11px;
+
+    color:
+        #7a8494;
+
+}
+
+
+/* =========================================================
+   EXPORT PROGRESS
+========================================================= */
+
+.export-progress {
+
+    display:
+        none;
+
+    margin-top:
+        15px;
+
+}
+
+
+.export-progress.show {
+
+    display:
+        block;
+
+}
+
+
+.progress-text {
+
+    text-align:
+        center;
+
+    font-size:
+        12px;
+
+    color:
+        #697386;
+
+    margin-bottom:
+        8px;
+
+}
+
+
+.progress-track {
+
+    width:
+        100%;
+
+    height:
+        8px;
+
+    background:
+        #edf0f4;
+
+    border-radius:
+        999px;
+
+    overflow:
+        hidden;
+
+}
+
+
+.progress-bar {
+
+    width:
+        0%;
+
+    height:
+        100%;
+
+    background:
+        #172033;
+
+    border-radius:
+        999px;
+
+    transition:
+        width .2s ease;
+
+}
+
+
+/* =========================================================
+   EXPORT MAP
+========================================================= */
+
+/*
+    PDF書き出し専用。
+
+    画面外に置くが display:none にはしない。
+    html2canvasが正しく地図を描画できるようにする。
+*/
+
+#printArea {
+
+    position:
+        fixed;
+
+    left:
+        -100000px;
+
+    top:
+        0;
+
+    width:
+        1000px;
+
+    height:
+        700px;
+
+    z-index:
+        -9999;
+
+    background:
+        white;
+
+    overflow:
+        hidden;
+
+}
+
+
+#exportMap {
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+}
+
+
+/* =========================================================
+   PRINT HEADER
+========================================================= */
+
+.export-header {
+
+    position:
+        absolute;
+
+    left:
+        12px;
+
+    top:
+        12px;
+
+    z-index:
+        2000;
+
+    padding:
+        7px 10px;
+
+    background:
+        rgba(255,255,255,.94);
+
+    border-radius:
+        9px;
+
+    box-shadow:
+        0 2px 10px rgba(0,0,0,.15);
+
+    font-size:
+        12px;
+
+    font-weight:
+        700;
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 520px) {
+
+    .topbar {
+
+        top:
+            10px;
+
+        left:
+            10px;
+
+        right:
+            10px;
+
+    }
+
+
+    .title-card {
+
+        padding:
+            9px 12px;
+
+    }
+
+
+    .title {
+
+        font-size:
+            14px;
+
+    }
+
+
+    .subtitle {
+
+        font-size:
+            10px;
+
+    }
+
+
+    .map-button {
+
+        width:
+            41px;
+
+        height:
+            41px;
+
+    }
+
+
+    .modebar {
+
+        left:
+            10px;
+
+        right:
+            10px;
+
+        bottom:
+            10px;
+
+        width:
+            auto;
+
+        transform:
+            none;
+
+    }
+
+
+    .mode-button {
+
+        flex:
+            1;
+
+        min-width:
+            0;
+
+    }
+
+
+    .info-card {
+
+        display:
+            none;
+
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div id="app">
+
+
+    <div id="map"></div>
+
+
+    <!-- =====================================================
+         TOP
+    ====================================================== -->
+
+    <div class="topbar">
+
+        <div class="title-card">
+
+            <div class="title">
+                Route Reconstruction
+            </div>
+
+            <div class="subtitle">
+                手動ルート再構成
+            </div>
+
+        </div>
+
+
+        <div class="map-buttons">
+
+            <button
+                class="map-button"
+                id="satelliteButton"
+                title="航空写真"
+            >
+                🛰️
+            </button>
+
+
+            <button
+                class="map-button"
+                id="saveButton"
+                title="保存"
+            >
+                💾
+            </button>
+
+
+            <button
+                class="map-button"
+                id="menuButton"
+                title="データ"
+            >
+                ⋯
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         HELP
+    ====================================================== -->
+
+    <div
+        id="help"
+        class="help"
+    ></div>
+
+
+    <!-- =====================================================
+         LINE EDITOR
+    ====================================================== -->
+
+    <div
+        id="lineEditor"
+        class="line-editor"
+    >
+
+        <button
+            id="lineUndoButton"
+        >
+            ↩ 戻す
+        </button>
+
+
+        <button
+            id="lineFinishButton"
+        >
+            ✓ 完了
+        </button>
+
+
+        <button
+            id="lineCancelButton"
+        >
+            × キャンセル
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
+         INFO
+    ====================================================== -->
+
+    <div class="info-card">
+
+        この地図は手動で配置・再構成したデータです。<br>
+
+        過去のGPSログを示すものではありません。
+
+    </div>
+
+
+    <!-- =====================================================
+         MODE
+    ====================================================== -->
+
+    <div class="modebar">
+
+        <button
+            class="mode-button active"
+            data-mode="select"
+        >
+
+            <span class="icon">
+                👆
+            </span>
+
+            選択
+
+        </button>
+
+
+        <button
+            class="mode-button"
+            data-mode="point"
+        >
+
+            <span class="icon">
+                📍
+            </span>
+
+            地点
+
+        </button>
+
+
+        <button
+            class="mode-button"
+            data-mode="line"
+        >
+
+            <span class="icon">
+                ✏️
+            </span>
+
+            線
+
+        </button>
+
+
+        <button
+            class="mode-button"
+            data-mode="delete"
+        >
+
+            <span class="icon">
+                🗑️
+            </span>
+
+            削除
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     POINT MODAL
+========================================================= -->
+
+<div
+    id="pointOverlay"
+    class="overlay"
+>
+
+    <div class="sheet">
+
+        <div class="sheet-handle"></div>
+
+        <div class="sheet-title">
+            地点を編集
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                時間
+            </label>
+
+            <input
+                id="pointTime"
+                type="time"
+            >
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                場所
+            </label>
+
+            <input
+                id="pointPlace"
+                type="text"
+                placeholder="例：学校正門"
+            >
+
+        </div>
+
+
+        <div class="actions">
+
+            <button
+                id="pointCancel"
+                class="action-button cancel-button"
+            >
+                キャンセル
+            </button>
+
+
+            <button
+                id="pointDelete"
+                class="action-button delete-button"
+            >
+                🗑️ 削除
+            </button>
+
+
+            <button
+                id="pointSave"
+                class="action-button save-button"
+            >
+                保存
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     LINE MODAL
+========================================================= -->
+
+<div
+    id="lineOverlay"
+    class="overlay"
+>
+
+    <div class="sheet">
+
+        <div class="sheet-handle"></div>
+
+        <div class="sheet-title">
+            線を編集
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                線の色
+            </label>
+
+
+            <div class="color-row">
+
+
+                <button
+                    class="color-option selected"
+                    data-color="#1d74f5"
+                    style="background:#1d74f5"
+                ></button>
+
+
+                <button
+                    class="color-option"
+                    data-color="#22a06b"
+                    style="background:#22a06b"
+                ></button>
+
+
+                <button
+                    class="color-option"
+                    data-color="#f59e0b"
+                    style="background:#f59e0b"
+                ></button>
+
+
+                <button
+                    class="color-option"
+                    data-color="#ef4444"
+                    style="background:#ef4444"
+                ></button>
+
+
+                <button
+                    class="color-option"
+                    data-color="#8b5cf6"
+                    style="background:#8b5cf6"
+                ></button>
+
+
+                <button
+                    class="color-option"
+                    data-color="#6b7280"
+                    style="background:#6b7280"
+                ></button>
+
+            </div>
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                線の太さ
+            </label>
+
+
+            <select id="lineWidth">
+
+                <option value="3">
+                    細い
+                </option>
+
+                <option
+                    value="5"
+                    selected
+                >
+                    標準
+                </option>
+
+                <option value="8">
+                    太い
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="actions">
+
+            <button
+                id="lineCancel"
+                class="action-button cancel-button"
+            >
+                閉じる
+            </button>
+
+
+            <button
+                id="lineDelete"
+                class="action-button delete-button"
+            >
+                🗑️ 削除
+            </button>
+
+
+            <button
+                id="lineSave"
+                class="action-button save-button"
+            >
+                保存
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     DATA MENU
+========================================================= -->
+
+<div
+    id="menuOverlay"
+    class="overlay"
+>
+
+    <div class="sheet">
+
+        <div class="sheet-handle"></div>
+
+        <div class="sheet-title">
+            データ
+        </div>
+
+
+        <div class="actions">
+
+            <button
+                id="jsonViewButton"
+                class="action-button secondary-button"
+            >
+                📋 JSONを見る
+            </button>
+
+
+            <button
+                id="exportButton"
+                class="action-button save-button"
+            >
+                📤 JSON保存
+            </button>
+
+        </div>
+
+
+        <div class="actions">
+
+            <button
+                id="importButton"
+                class="action-button cancel-button"
+            >
+                📥 JSON読み込み
+            </button>
+
+
+            <button
+                id="menuClose"
+                class="action-button cancel-button"
+            >
+                閉じる
+            </button>
+
+        </div>
+
+
+        <div class="actions">
+
+            <button
+                id="pdfButton"
+                class="action-button secondary-button"
+            >
+                📄 100m詳細PDF
+            </button>
+
+        </div>
+
+
+        <div class="actions">
+
+            <button
+                id="clearButton"
+                class="action-button delete-button"
+            >
+                🗑️ すべて削除
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     PDF EXPORT MENU
+========================================================= -->
+
+<div
+    id="pdfOverlay"
+    class="overlay"
+>
+
+    <div class="sheet">
+
+        <div class="sheet-handle"></div>
+
+        <div class="sheet-title">
+            100m詳細PDF
+        </div>
+
+
+        <div class="export-description">
+
+            広い範囲を1枚に縮小するのではなく、
+            同じ細かさの地図を複数ページに分けて書き出します。<br><br>
+
+            線の太さ・色・矢印・地点・時刻も
+            各ページに反映されます。
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                地図
+            </label>
+
+
+            <label class="export-option">
+
+                <input
+                    type="radio"
+                    name="pdfMapType"
+                    value="normal"
+                    checked
+                >
+
+                <div>
+
+                    <strong>
+                        🗺️ 通常の地図
+                    </strong>
+
+                    <span>
+                        OpenStreetMap
+                    </span>
+
+                </div>
+
+            </label>
+
+
+            <label class="export-option">
+
+                <input
+                    type="radio"
+                    name="pdfMapType"
+                    value="satellite"
+                >
+
+                <div>
+
+                    <strong>
+                        🛰️ 航空写真
+                    </strong>
+
+                    <span>
+                        衛星・航空写真を背景にします
+                    </span>
+
+                </div>
+
+            </label>
+
+        </div>
+
+
+        <div class="field">
+
+            <label class="export-option">
+
+                <input
+                    id="pdfLabels"
+                    type="checkbox"
+                    checked
+                >
+
+                <div>
+
+                    <strong>
+                        📍 地点名・時刻を表示
+                    </strong>
+
+                    <span>
+                        PDF上にも地点情報を表示します
+                    </span>
+
+                </div>
+
+            </label>
+
+        </div>
+
+
+        <div
+            id="exportProgress"
+            class="export-progress"
+        >
+
+            <div
+                id="progressText"
+                class="progress-text"
+            >
+                準備中…
+            </div>
+
+
+            <div class="progress-track">
+
+                <div
+                    id="progressBar"
+                    class="progress-bar"
+                ></div>
+
+            </div>
+
+        </div>
+
+
+        <div class="actions">
+
+            <button
+                id="pdfCancel"
+                class="action-button cancel-button"
+            >
+                キャンセル
+            </button>
+
+
+            <button
+                id="pdfStart"
+                class="action-button save-button"
+            >
+                📄 PDFを書き出す
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     JSON VIEW
+========================================================= -->
+
+<div
+    id="jsonOverlay"
+    class="overlay"
+>
+
+    <div class="sheet">
+
+        <div class="sheet-handle"></div>
+
+        <div class="sheet-title">
+            JSONデータ
+        </div>
+
+
+        <div
+            id="jsonCount"
+            class="json-count"
+        ></div>
+
+
+        <div class="field">
+
+            <label>
+                現在保存されているデータ
+            </label>
+
+
+            <textarea
+                id="jsonText"
+                spellcheck="false"
+            ></textarea>
+
+        </div>
+
+
+        <div class="actions">
+
+            <button
+                id="copyJsonButton"
+                class="action-button secondary-button"
+            >
+                📋 JSON全体をコピー
+            </button>
+
+        </div>
+
+
+        <div class="actions">
+
+            <button
+                id="copyLinesButton"
+                class="action-button secondary-button"
+            >
+                📐 線のデータをコピー
+            </button>
+
+
+            <button
+                id="jsonApplyButton"
+                class="action-button save-button"
+            >
+                ↻ このJSONを反映
+            </button>
+
+        </div>
+
+
+        <div
+            id="copyStatus"
+            class="copy-status"
+        ></div>
+
+
+        <div class="actions">
+
+            <button
+                id="jsonClose"
+                class="action-button cancel-button"
+            >
+                閉じる
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     JSON PASTE
+========================================================= -->
+
+<div
+    id="pasteOverlay"
+    class="overlay"
+>
+
+    <div class="sheet">
+
+        <div class="sheet-handle"></div>
+
+        <div class="sheet-title">
+            JSONを読み込む
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                JSONをここに貼り付け
+            </label>
+
+
+            <textarea
+                id="pasteJsonText"
+                spellcheck="false"
+                placeholder='{
+  "version": 5,
+  "points": [],
+  "lines": []
+}'
+            ></textarea>
+
+        </div>
+
+
+        <div class="actions">
+
+            <button
+                id="pasteCancel"
+                class="action-button cancel-button"
+            >
+                キャンセル
+            </button>
+
+
+            <button
+                id="pasteApply"
+                class="action-button save-button"
+            >
+                読み込む
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     FILE
+========================================================= -->
+
+<input
+    id="fileInput"
+    type="file"
+    accept=".json,application/json"
+    hidden
+>
+
+
+<!-- =========================================================
+     EXPORT AREA
+========================================================= -->
+
+<div id="printArea">
+
+    <div
+        id="exportMap"
+    ></div>
+
+</div>
+
+
+<!-- =========================================================
+     LIBRARIES
+========================================================= -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+
+<script>
+
+"use strict";
+
+
+/* =========================================================
+   STORAGE
+========================================================= */
+
+const STORAGE_KEY =
+    "route-reconstruction-data-v3";
+
+
+/* =========================================================
+   MAIN MAP
+========================================================= */
+
+const map =
+    L.map(
+        "map",
+        {
+
+            zoomControl:
+                false,
+
+            doubleClickZoom:
+                false,
+
+            attributionControl:
+                true
+
+        }
+    )
+    .setView(
+        [32.85,129.85],
+        13
+    );
+
+
+L.control.zoom(
+    {
+        position:
+            "bottomright"
+    }
+).addTo(map);
+
+
+/* =========================================================
+   NORMAL MAP
+========================================================= */
+
+const normalLayer =
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+
+            maxZoom:
+                19,
+
+            crossOrigin:
+                true,
+
+            attribution:
+                "&copy; OpenStreetMap contributors"
+
+        }
+    );
+
+
+/* =========================================================
+   SATELLITE MAP
+========================================================= */
+
+const satelliteLayer =
+    L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        {
+
+            maxZoom:
+                19,
+
+            crossOrigin:
+                true,
+
+            attribution:
+                "Tiles &copy; Esri"
+
+        }
+    );
+
+
+normalLayer.addTo(
+    map
+);
+
+
+let satelliteMode =
+    false;
+
+
+/* =========================================================
+   SCALE
+========================================================= */
+
+L.control.scale(
+    {
+
+        imperial:
+            false,
+
+        metric:
+            true,
+
+        maxWidth:
+            150
+
+    }
+).addTo(map);
+
+
+/* =========================================================
+   DATA
+========================================================= */
+
+let points = [];
+
+let lines = [];
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let currentMode =
+    "select";
+
+
+let currentPointId =
+    null;
+
+
+let currentLineId =
+    null;
+
+
+let lineDrawing =
+    false;
+
+
+let temporaryLineCoords =
+    [];
+
+
+let temporaryLine =
+    null;
+
+
+const pointLayers =
+    new Map();
+
+
+const lineLayers =
+    new Map();
+
+
+/* =========================================================
+   EXPORT MAP STATE
+========================================================= */
+
+let exportMap =
+    null;
+
+
+let exportNormalLayer =
+    null;
+
+
+let exportSatelliteLayer =
+    null;
+
+
+/* =========================================================
+   HELP
+========================================================= */
+
+const help =
+    document.getElementById(
+        "help"
+    );
+
+
+let helpTimer =
+    null;
+
+
+function showHelp(
+    message
+) {
+
+    help.textContent =
+        message;
+
+
+    help.classList.add(
+        "show"
+    );
+
+
+    clearTimeout(
+        helpTimer
+    );
+
+
+    helpTimer =
+        setTimeout(
+            () => {
+
+                help.classList.remove(
+                    "show"
+                );
+
+            },
+            2300
+        );
+
+}
+
+
+/* =========================================================
+   ID
+========================================================= */
+
+function createId(
+    prefix
+) {
+
+    return (
+
+        prefix +
+
+        "_" +
+
+        Date.now()
+            .toString(36) +
+
+        "_" +
+
+        Math.random()
+            .toString(36)
+            .slice(2,8)
+
+    );
+
+}
+
+
+/* =========================================================
+   ESCAPE
+========================================================= */
+
+function escapeHtml(
+    value
+) {
+
+    return String(
+        value
+    )
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+    .replace(
+        /</g,
+        "&lt;"
+    )
+    .replace(
+        />/g,
+        "&gt;"
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+
+/* =========================================================
+   NORMALIZE DATA
+========================================================= */
+
+function normalizeData(
+    data
+) {
+
+    if (
+        !data ||
+        typeof data !==
+            "object"
+    ) {
+
+        throw new Error(
+            "JSONデータが正しくありません。"
+        );
+
+    }
+
+
+    const normalizedPoints =
+        Array.isArray(
+            data.points
+        )
+            ? data.points
+            : [];
+
+
+    const normalizedLines =
+        Array.isArray(
+            data.lines
+        )
+            ? data.lines
+            : [];
+
+
+    return {
+
+        version:
+            5,
+
+
+        note:
+            "手動で配置・再構成したルートデータです。過去GPSログではありません。",
+
+
+        points:
+
+            normalizedPoints
+
+                .map(
+                    (
+                        p,
+                        index
+                    ) => {
+
+                        return {
+
+                            id:
+                                p.id ||
+
+                                (
+                                    "point_" +
+
+                                    String(
+                                        index + 1
+                                    )
+                                    .padStart(
+                                        3,
+                                        "0"
+                                    )
+                                ),
+
+                            lat:
+                                Number(
+                                    p.lat
+                                ),
+
+                            lng:
+                                Number(
+                                    p.lng
+                                ),
+
+                            time:
+                                typeof p.time ===
+                                "string"
+                                    ? p.time
+                                    : "",
+
+                            place:
+                                typeof p.place ===
+                                "string"
+                                    ? p.place
+                                    : ""
+
+                        };
+
+                    }
+                )
+
+                .filter(
+                    p =>
+
+                        Number.isFinite(
+                            p.lat
+                        ) &&
+
+                        Number.isFinite(
+                            p.lng
+                        )
+                ),
+
+
+        lines:
+
+            normalizedLines
+
+                .map(
+                    (
+                        line,
+                        index
+                    ) => {
+
+                        const coords =
+                            Array.isArray(
+                                line.coords
+                            )
+                                ? line.coords
+                                : [];
+
+
+                        return {
+
+                            id:
+                                line.id ||
+
+                                (
+                                    "line_" +
+
+                                    String(
+                                        index + 1
+                                    )
+                                    .padStart(
+                                        3,
+                                        "0"
+                                    )
+                                ),
+
+
+                            color:
+                                line.color ||
+                                "#1d74f5",
+
+
+                            width:
+                                Number(
+                                    line.width
+                                ) || 5,
+
+
+                            dash:
+                                line.dash ||
+                                "",
+
+
+                            coords:
+
+                                coords
+
+                                    .map(
+                                        coord => {
+
+                                            if (
+                                                !Array.isArray(
+                                                    coord
+                                                ) ||
+                                                coord.length <
+                                                    2
+                                            ) {
+
+                                                return null;
+
+                                            }
+
+
+                                            const lat =
+                                                Number(
+                                                    coord[0]
+                                                );
+
+
+                                            const lng =
+                                                Number(
+                                                    coord[1]
+                                                );
+
+
+                                            if (
+                                                !Number.isFinite(
+                                                    lat
+                                                ) ||
+
+                                                !Number.isFinite(
+                                                    lng
+                                                )
+                                            ) {
+
+                                                return null;
+
+                                            }
+
+
+                                            return [
+                                                lat,
+                                                lng
+                                            ];
+
+                                        }
+                                    )
+
+                                    .filter(
+                                        Boolean
+                                    )
+
+                        };
+
+                    }
+                )
+
+                .filter(
+                    line =>
+                        line.coords.length >=
+                        2
+                )
+
+    };
+
+}
+
+
+/* =========================================================
+   SAVE
+========================================================= */
+
+function saveData() {
+
+    const data = {
+
+        version:
+            5,
+
+        type:
+            "route-reconstruction",
+
+        note:
+            "手動で配置・再構成したルートデータです。過去GPSログではありません。",
+
+        points,
+
+        lines
+
+    };
+
+
+    localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(
+            data
+        )
+    );
+
+}
+
+
+/* =========================================================
+   LOAD
+========================================================= */
+
+function loadData() {
+
+    try {
+
+        const raw =
+            localStorage.getItem(
+                STORAGE_KEY
+            );
+
+
+        if (!raw) {
+
+            points =
+                [];
+
+            lines =
+                [];
+
+            return;
+
+        }
+
+
+        const data =
+            JSON.parse(
+                raw
+            );
+
+
+        const normalized =
+            normalizeData(
+                data
+            );
+
+
+        points =
+            normalized.points;
+
+
+        lines =
+            normalized.lines;
+
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            error
+        );
+
+
+        alert(
+            "保存されていたデータの読み込みに失敗しました。"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   CURRENT DATA
+========================================================= */
+
+function getCurrentData() {
+
+    return {
+
+        version:
+            5,
+
+        type:
+            "route-reconstruction",
+
+        createdAt:
+            new Date().toISOString(),
+
+        note:
+            "手動で配置・再構成したルートデータです。過去GPSログではありません。",
+
+        points,
+
+        lines
+
+    };
+
+}
+
+
+/* =========================================================
+   JSON
+========================================================= */
+
+function getCurrentJson() {
+
+    return JSON.stringify(
+        getCurrentData(),
+        null,
+        2
+    );
+
+}
+
+
+/* =========================================================
+   ARROW ANGLE
+========================================================= */
+
+function getArrowAngle(
+    a,
+    b
+) {
+
+    const pa =
+        map.latLngToLayerPoint(
+            a
+        );
+
+
+    const pb =
+        map.latLngToLayerPoint(
+            b
+        );
+
+
+    const dx =
+        pb.x -
+        pa.x;
+
+
+    const dy =
+        pb.y -
+        pa.y;
+
+
+    return (
+
+        Math.atan2(
+            dy,
+            dx
+        ) *
+
+        180 /
+
+        Math.PI
+
+    );
+
+}
+
+
+/* =========================================================
+   CREATE ARROW
+========================================================= */
+
+function createArrowMarker(
+    latlng,
+    angle,
+    color,
+    size
+) {
+
+    const arrowIcon =
+        L.divIcon(
+            {
+
+                className:
+                    "route-arrow-icon",
+
+
+                html:
+
+                    `
+                    <div
+                        style="
+                            width:${size}px;
+                            height:${size}px;
+
+                            display:flex;
+
+                            align-items:center;
+
+                            justify-content:center;
+
+                            transform:
+                                rotate(${angle}deg);
+
+                            transform-origin:
+                                center;
+
+                            color:${color};
+
+                            font-size:${size}px;
+
+                            font-weight:900;
+
+                            line-height:1;
+
+                            text-shadow:
+                                0 1px 2px rgba(0,0,0,.35);
+                        "
+                    >▶</div>
+                    `,
+
+
+                iconSize:
+                    [
+                        size,
+                        size
+                    ],
+
+
+                iconAnchor:
+                    [
+                        size / 2,
+                        size / 2
+                    ],
+
+
+                interactive:
+                    false
+
+            }
+        );
+
+
+    return L.marker(
+        latlng,
+        {
+
+            icon:
+                arrowIcon,
+
+            interactive:
+                false,
+
+            keyboard:
+                false,
+
+            zIndexOffset:
+                500
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   CREATE LINE ARROWS
+========================================================= */
+
+function createLineArrows(
+    line
+) {
+
+    const coords =
+        line.coords;
+
+
+    if (
+        !Array.isArray(
+            coords
+        ) ||
+
+        coords.length <
+            2
+    ) {
+
+        return [];
+
+    }
+
+
+    const arrows =
+        [];
+
+
+    const segmentLengths =
+        [];
+
+
+    let totalLength =
+        0;
+
+
+    for (
+        let i = 0;
+        i < coords.length - 1;
+        i++
+    ) {
+
+        const a =
+            L.latLng(
+                coords[i][0],
+                coords[i][1]
+            );
+
+
+        const b =
+            L.latLng(
+                coords[i + 1][0],
+                coords[i + 1][1]
+            );
+
+
+        const distance =
+            a.distanceTo(
+                b
+            );
+
+
+        segmentLengths.push(
+            distance
+        );
+
+
+        totalLength +=
+            distance;
+
+    }
+
+
+    if (
+        totalLength <=
+        0
+    ) {
+
+        return arrows;
+
+    }
+
+
+    /*
+        線の長さによって矢印数を変更。
+
+        短い線
+        → 1個
+
+        中くらい
+        → 2〜3個
+
+        長い線
+        → 最大8個
+    */
+
+    const arrowCount =
+        Math.max(
+            1,
+            Math.min(
+                8,
+                Math.floor(
+                    totalLength /
+                    180
+                ) + 1
+            )
+        );
+
+
+    for (
+        let n = 1;
+        n <= arrowCount;
+        n++
+    ) {
+
+        const targetDistance =
+
+            totalLength *
+
+            (
+                0.15 +
+
+                (
+                    0.70 *
+
+                    (
+                        n /
+                        (
+                            arrowCount +
+                            1
+                        )
+                    )
+                )
+            );
+
+
+        let accumulated =
+            0;
+
+
+        let segmentIndex =
+            0;
+
+
+        for (
+            let i = 0;
+            i < segmentLengths.length;
+            i++
+        ) {
+
+            if (
+                accumulated +
+                segmentLengths[i]
+                >=
+                targetDistance
+            ) {
+
+                segmentIndex =
+                    i;
+
+                break;
+
+            }
+
+
+            accumulated +=
+                segmentLengths[i];
+
+        }
+
+
+        const a =
+            L.latLng(
+                coords[
+                    segmentIndex
+                ][0],
+                coords[
+                    segmentIndex
+                ][1]
+            );
+
+
+        const b =
+            L.latLng(
+                coords[
+                    segmentIndex + 1
+                ][0],
+                coords[
+                    segmentIndex + 1
+                ][1]
+            );
+
+
+        const remaining =
+            targetDistance -
+            accumulated;
+
+
+        const segmentLength =
+            segmentLengths[
+                segmentIndex
+            ];
+
+
+        const ratio =
+            segmentLength > 0
+                ? remaining /
+                    segmentLength
+                : 0;
+
+
+        const lat =
+            a.lat +
+            (
+                b.lat -
+                a.lat
+            ) *
+            ratio;
+
+
+        const lng =
+            a.lng +
+            (
+                b.lng -
+                a.lng
+            ) *
+            ratio;
+
+
+        const angle =
+            getArrowAngle(
+                a,
+                b
+            );
+
+
+        const size =
+            Math.max(
+                18,
+                Math.min(
+                    27,
+                    (
+                        Number(
+                            line.width
+                        ) || 5
+                    ) * 4
+                )
+            );
+
+
+        const arrow =
+            createArrowMarker(
+                [lat,lng],
+                angle,
+                line.color ||
+                    "#1d74f5",
+                size
+            );
+
+
+        arrow.addTo(
+            map
+        );
+
+
+        arrows.push(
+            arrow
+        );
+
+    }
+
+
+    return arrows;
+
+}
+
+
+/* =========================================================
+   RENDER
+========================================================= */
+
+function render() {
+
+
+    /* =====================================================
+       REMOVE OLD POINTS
+    ====================================================== */
+
+    pointLayers.forEach(
+        layer => {
+
+            if (
+                map.hasLayer(
+                    layer
+                )
+            ) {
+
+                map.removeLayer(
+                    layer
+                );
+
+            }
+
+        }
+    );
+
+
+    pointLayers.clear();
+
+
+    /* =====================================================
+       REMOVE OLD LINES + ARROWS
+    ====================================================== */
+
+    lineLayers.forEach(
+        item => {
+
+            if (
+                item.polyline &&
+                map.hasLayer(
+                    item.polyline
+                )
+            ) {
+
+                map.removeLayer(
+                    item.polyline
+                );
+
+            }
+
+
+            if (
+                Array.isArray(
+                    item.arrows
+                )
+            ) {
+
+                item.arrows.forEach(
+                    arrow => {
+
+                        if (
+                            map.hasLayer(
+                                arrow
+                            )
+                        ) {
+
+                            map.removeLayer(
+                                arrow
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+
+        }
+    );
+
+
+    lineLayers.clear();
+
+
+    /* =====================================================
+       POINTS
+    ====================================================== */
+
+    points.forEach(
+        point => {
+
+
+            const icon =
+                L.divIcon(
+                    {
+
+                        className:
+                            "",
+
+                        html:
+                            `
+                            <div
+                                class="custom-point"
+                            ></div>
+                            `,
+
+                        iconSize:
+                            [
+                                28,
+                                28
+                            ],
+
+                        iconAnchor:
+                            [
+                                14,
+                                14
+                            ],
+
+                        popupAnchor:
+                            [
+                                0,
+                                -14
+                            ]
+
+                    }
+                );
+
+
+            const marker =
+                L.marker(
+                    [
+                        point.lat,
+                        point.lng
+                    ],
+                    {
+
+                        icon,
+
+                        draggable:
+                            true
+
+                    }
+                );
+
+
+            marker.addTo(
+                map
+            );
+
+
+            /* =================================================
+               DRAG
+            ================================================== */
+
+            marker.on(
+                "dragend",
+                event => {
+
+                    const position =
+                        event.target
+                            .getLatLng();
+
+
+                    const target =
+                        points.find(
+                            p =>
+                                p.id ===
+                                point.id
+                        );
+
+
+                    if (!target) {
+
+                        return;
+
+                    }
+
+
+                    target.lat =
+                        position.lat;
+
+
+                    target.lng =
+                        position.lng;
+
+
+                    saveData();
+
+
+                    showHelp(
+                        "地点を移動しました"
+                    );
+
+                }
+            );
+
+
+            /* =================================================
+               CLICK
+            ================================================== */
+
+            marker.on(
+                "click",
+                event => {
+
+                    L.DomEvent.stopPropagation(
+                        event
+                    );
+
+
+                    if (
+                        currentMode ===
+                        "delete"
+                    ) {
+
+                        deletePointById(
+                            point.id
+                        );
+
+
+                        return;
+
+                    }
+
+
+                    if (
+                        currentMode ===
+                        "select"
+                    ) {
+
+                        openPointModal(
+                            point.id
+                        );
+
+                    }
+
+                }
+            );
+
+
+            marker.bindPopup(
+                `
+                <div
+                    style="
+                        font-weight:750;
+                        font-size:14px;
+                    "
+                >
+                    ${
+                        escapeHtml(
+                            point.place ||
+                            "名称なし"
+                        )
+                    }
+                </div>
+
+                <div
+                    style="
+                        color:#6b7280;
+                        font-size:12px;
+                        margin-top:3px;
+                    "
+                >
+                    ${
+                        point.time ||
+                        "時間未設定"
+                    }
+                </div>
+                `
+            );
+
+
+            pointLayers.set(
+                point.id,
+                marker
+            );
+
+        }
+    );
+
+
+    /* =====================================================
+       LINES
+    ====================================================== */
+
+    lines.forEach(
+        line => {
+
+
+            const polyline =
+                L.polyline(
+                    line.coords,
+                    {
+
+                        color:
+                            line.color ||
+                            "#1d74f5",
+
+                        weight:
+                            line.width ||
+                            5,
+
+                        opacity:
+                            .9,
+
+                        dashArray:
+                            line.dash ||
+                            null,
+
+                        lineCap:
+                            "round",
+
+                        lineJoin:
+                            "round",
+
+                        bubblingMouseEvents:
+                            false
+
+                    }
+                );
+
+
+            polyline.addTo(
+                map
+            );
+
+
+            /* =================================================
+               ARROWS
+            ================================================== */
+
+            const arrows =
+                createLineArrows(
+                    line
+                );
+
+
+            /* =================================================
+               LINE CLICK
+            ================================================== */
+
+            polyline.on(
+                "click",
+                event => {
+
+                    L.DomEvent.stopPropagation(
+                        event
+                    );
+
+
+                    if (
+                        currentMode ===
+                        "delete"
+                    ) {
+
+                        deleteLineById(
+                            line.id
+                        );
+
+
+                        return;
+
+                    }
+
+
+                    if (
+                        currentMode ===
+                        "select"
+                    ) {
+
+                        openLineModal(
+                            line.id
+                        );
+
+                    }
+
+                }
+            );
+
+
+            lineLayers.set(
+                line.id,
+                {
+
+                    polyline,
+
+                    arrows
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   MODE
+========================================================= */
+
+function setMode(
+    mode
+) {
+
+
+    if (
+        currentMode ===
+        "line" &&
+
+        lineDrawing
+    ) {
+
+        cancelLine();
+
+    }
+
+
+    currentMode =
+        mode;
+
+
+    document
+        .querySelectorAll(
+            ".mode-button"
+        )
+        .forEach(
+            button => {
+
+                button.classList.toggle(
+                    "active",
+                    button.dataset.mode ===
+                        mode
+                );
+
+            }
+        );
+
+
+    if (
+        mode ===
+        "select"
+    ) {
+
+        showHelp(
+            "地点や線をタップして編集"
+        );
+
+    }
+
+
+    if (
+        mode ===
+        "point"
+    ) {
+
+        showHelp(
+            "地図をタップして地点を追加"
+        );
+
+    }
+
+
+    if (
+        mode ===
+        "line"
+    ) {
+
+        showHelp(
+            "地図をタップして線を描く"
+        );
+
+    }
+
+
+    if (
+        mode ===
+        "delete"
+    ) {
+
+        showHelp(
+            "削除したい地点・線をタップ"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   MODE BUTTONS
+========================================================= */
+
+document
+    .querySelectorAll(
+        ".mode-button"
+    )
+    .forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    setMode(
+                        button.dataset.mode
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   MAP CLICK
+========================================================= */
+
+map.on(
+    "click",
+    event => {
+
+
+        if (
+            currentMode ===
+            "point"
+        ) {
+
+            createPoint(
+                event.latlng.lat,
+                event.latlng.lng
+            );
+
+
+            return;
+
+        }
+
+
+        if (
+            currentMode ===
+            "line"
+        ) {
+
+            addLinePoint(
+                event.latlng.lat,
+                event.latlng.lng
+            );
+
+
+            return;
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   CREATE POINT
+========================================================= */
+
+function createPoint(
+    lat,
+    lng
+) {
+
+    const point = {
+
+        id:
+            createId(
+                "point"
+            ),
+
+        lat,
+
+        lng,
+
+        time:
+            "",
+
+        place:
+            ""
+
+    };
+
+
+    points.push(
+        point
+    );
+
+
+    saveData();
+
+    render();
+
+    openPointModal(
+        point.id
+    );
+
+}
+
+
+/* =========================================================
+   POINT MODAL
+========================================================= */
+
+function openPointModal(
+    id
+) {
+
+    const point =
+        points.find(
+            p =>
+                p.id ===
+                id
+        );
+
+
+    if (!point) {
+
+        return;
+
+    }
+
+
+    currentPointId =
+        id;
+
+
+    document.getElementById(
+        "pointTime"
+    ).value =
+        point.time ||
+        "";
+
+
+    document.getElementById(
+        "pointPlace"
+    ).value =
+        point.place ||
+        "";
+
+
+    document
+        .getElementById(
+            "pointOverlay"
+        )
+        .classList.add(
+            "show"
+        );
+
+}
+
+
+/* =========================================================
+   CLOSE POINT
+========================================================= */
+
+function closePointModal() {
+
+    currentPointId =
+        null;
+
+
+    document
+        .getElementById(
+            "pointOverlay"
+        )
+        .classList.remove(
+            "show"
+        );
+
+}
+
+
+/* =========================================================
+   POINT SAVE
+========================================================= */
+
+document
+    .getElementById(
+        "pointSave"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+
+            const id =
+                currentPointId;
+
+
+            if (!id) {
+
+                return;
+
+            }
+
+
+            const point =
+                points.find(
+                    p =>
+                        p.id ===
+                        id
+                );
+
+
+            if (!point) {
+
+                closePointModal();
+
+                return;
+
+            }
+
+
+            point.time =
+                document.getElementById(
+                    "pointTime"
+                ).value;
+
+
+            point.place =
+                document.getElementById(
+                    "pointPlace"
+                ).value.trim();
+
+
+            saveData();
+
+            render();
+
+            closePointModal();
+
+
+            showHelp(
+                "地点を保存しました"
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   POINT CANCEL
+========================================================= */
+
+document
+    .getElementById(
+        "pointCancel"
+    )
+    .addEventListener(
+        "click",
+        closePointModal
+    );
+
+
+/* =========================================================
+   POINT DELETE
+========================================================= */
+
+document
+    .getElementById(
+        "pointDelete"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+
+            const id =
+                currentPointId;
+
+
+            if (!id) {
+
+                return;
+
+            }
+
+
+            if (
+                !confirm(
+                    "この地点を削除しますか？"
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            points =
+                points.filter(
+                    p =>
+                        p.id !==
+                        id
+                );
+
+
+            currentPointId =
+                null;
+
+
+            saveData();
+
+            closePointModal();
+
+            render();
+
+
+            showHelp(
+                "地点を削除しました"
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   DELETE POINT
+========================================================= */
+
+function deletePointById(
+    id
+) {
+
+    const target =
+        points.find(
+            p =>
+                p.id ===
+                id
+        );
+
+
+    if (!target) {
+
+        return;
+
+    }
+
+
+    if (
+        !confirm(
+            "この地点を削除しますか？"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    points =
+        points.filter(
+            p =>
+                p.id !==
+                id
+        );
+
+
+    if (
+        currentPointId ===
+        id
+    ) {
+
+        currentPointId =
+            null;
+
+    }
+
+
+    saveData();
+
+    render();
+
+
+    showHelp(
+        "地点を削除しました"
+    );
+
+}
+
+
+/* =========================================================
+   LINE DRAW
+========================================================= */
+
+function addLinePoint(
+    lat,
+    lng
+) {
+
+
+    if (
+        !lineDrawing
+    ) {
+
+        lineDrawing =
+            true;
+
+
+        temporaryLineCoords =
+            [];
+
+
+        document
+            .getElementById(
+                "lineEditor"
+            )
+            .classList.add(
+                "show"
+            );
+
+    }
+
+
+    temporaryLineCoords.push(
+        [
+            lat,
+            lng
+        ]
+    );
+
+
+    updateTemporaryLine();
+
+}
+
+
+/* =========================================================
+   TEMPORARY LINE
+========================================================= */
+
+function updateTemporaryLine() {
+
+
+    if (
+        temporaryLine
+    ) {
+
+        map.removeLayer(
+            temporaryLine
+        );
+
+
+        temporaryLine =
+            null;
+
+    }
+
+
+    if (
+        temporaryLineCoords.length <
+        2
+    ) {
+
+        return;
+
+    }
+
+
+    temporaryLine =
+        L.polyline(
+            temporaryLineCoords,
+            {
+
+                color:
+                    "#172033",
+
+                weight:
+                    5,
+
+                dashArray:
+                    "8 7",
+
+                opacity:
+                    .75,
+
+                lineCap:
+                    "round",
+
+                lineJoin:
+                    "round",
+
+                interactive:
+                    false
+
+            }
+        )
+        .addTo(
+            map
+        );
+
+}
+
+
+/* =========================================================
+   LINE UNDO
+========================================================= */
+
+document
+    .getElementById(
+        "lineUndoButton"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+
+            if (
+                temporaryLineCoords.length ===
+                0
+            ) {
+
+                return;
+
+            }
+
+
+            temporaryLineCoords.pop();
+
+            updateTemporaryLine();
+
+        }
+    );
+
+
+/* =========================================================
+   FINISH LINE
+========================================================= */
+
+function finishLine() {
+
+
+    if (
+        !lineDrawing
+    ) {
+
+        hideLineEditor();
+
+        return;
+
+    }
+
+
+    if (
+        temporaryLineCoords.length >=
+        2
+    ) {
+
+
+        const line = {
+
+            id:
+                createId(
+                    "line"
+                ),
+
+            coords:
+                temporaryLineCoords.map(
+                    coord => [
+
+                        coord[0],
+
+                        coord[1]
+
+                    ]
+                ),
+
+            color:
+                "#1d74f5",
+
+            width:
+                5,
+
+            dash:
+                ""
+
+        };
+
+
+        lines.push(
+            line
+        );
+
+
+        saveData();
+
+    }
+
+
+    if (
+        temporaryLine
+    ) {
+
+        map.removeLayer(
+            temporaryLine
+        );
+
+
+        temporaryLine =
+            null;
+
+    }
+
+
+    temporaryLineCoords =
+        [];
+
+
+    lineDrawing =
+        false;
+
+
+    hideLineEditor();
+
+
+    render();
+
+
+    setMode(
+        "select"
+    );
+
+}
+
+
+/* =========================================================
+   FINISH BUTTON
+========================================================= */
+
+document
+    .getElementById(
+        "lineFinishButton"
+    )
+    .addEventListener(
+        "click",
+        finishLine
+    );
+
+
+/* =========================================================
+   CANCEL LINE
+========================================================= */
+
+function cancelLine() {
+
+
+    if (
+        temporaryLine
+    ) {
+
+        map.removeLayer(
+            temporaryLine
+        );
+
+
+        temporaryLine =
+            null;
+
+    }
+
+
+    temporaryLineCoords =
+        [];
+
+
+    lineDrawing =
+        false;
+
+
+    hideLineEditor();
+
+}
+
+
+document
+    .getElementById(
+        "lineCancelButton"
+    )
+    .addEventListener(
+        "click",
+        cancelLine
+    );
+
+
+function hideLineEditor() {
+
+    document
+        .getElementById(
+            "lineEditor"
+        )
+        .classList.remove(
+            "show"
+        );
+
+}
+
+
+/* =========================================================
+   LINE MODAL
+========================================================= */
+
+function openLineModal(
+    id
+) {
+
+
+    const line =
+        lines.find(
+            l =>
+                l.id ===
+                id
+        );
+
+
+    if (!line) {
+
+        return;
+
+    }
+
+
+    currentLineId =
+        id;
+
+
+    document
+        .querySelectorAll(
+            ".color-option"
+        )
+        .forEach(
+            button => {
+
+                button.classList.toggle(
+                    "selected",
+
+                    button.dataset.color ===
+                        (
+                            line.color ||
+                            "#1d74f5"
+                        )
+                );
+
+            }
+        );
+
+
+    document.getElementById(
+        "lineWidth"
+    ).value =
+        String(
+            line.width ||
+            5
+        );
+
+
+    document
+        .getElementById(
+            "lineOverlay"
+        )
+        .classList.add(
+            "show"
+        );
+
+}
+
+
+/* =========================================================
+   CLOSE LINE
+========================================================= */
+
+function closeLineModal() {
+
+    currentLineId =
+        null;
+
+
+    document
+        .getElementById(
+            "lineOverlay"
+        )
+        .classList.remove(
+            "show"
+        );
+
+}
+
+
+/* =========================================================
+   COLOR
+========================================================= */
+
+document
+    .querySelectorAll(
+        ".color-option"
+    )
+    .forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+
+                    document
+                        .querySelectorAll(
+                            ".color-option"
+                        )
+                        .forEach(
+                            b =>
+                                b.classList.remove(
+                                    "selected"
+                                )
+                        );
+
+
+                    button.classList.add(
+                        "selected"
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   LINE SAVE
+========================================================= */
+
+document
+    .getElementById(
+        "lineSave"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+
+            const id =
+                currentLineId;
+
+
+            if (!id) {
+
+                return;
+
+            }
+
+
+            const line =
+                lines.find(
+                    l =>
+                        l.id ===
+                        id
+                );
+
+
+            if (!line) {
+
+                closeLineModal();
+
+                return;
+
+            }
+
+
+            const colorButton =
+                document.querySelector(
+                    ".color-option.selected"
+                );
+
+
+            if (
+                colorButton
+            ) {
+
+                line.color =
+                    colorButton.dataset.color;
+
+            }
+
+
+            line.width =
+                Number(
+                    document.getElementById(
+                        "lineWidth"
+                    ).value
+                );
+
+
+            saveData();
+
+            closeLineModal();
+
+            render();
+
+
+            showHelp(
+                "線を保存しました"
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   LINE CANCEL
+========================================================= */
+
+document
+    .getElementById(
+        "lineCancel"
+    )
+    .addEventListener(
+        "click",
+        closeLineModal
+    );
+
+
+/* =========================================================
+   LINE DELETE
+========================================================= */
+
+document
+    .getElementById(
+        "lineDelete"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+
+            const id =
+                currentLineId;
+
+
+            if (!id) {
+
+                return;
+
+            }
+
+
+            if (
+                !confirm(
+                    "この線を削除しますか？"
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            lines =
+                lines.filter(
+                    line =>
+                        line.id !==
+                        id
+                );
+
+
+            currentLineId =
+                null;
+
+
+            saveData();
+
+            closeLineModal();
+
+            render();
+
+
+            showHelp(
+                "線を削除しました"
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   DELETE LINE
+========================================================= */
+
+function deleteLineById(
+    id
+) {
+
+
+    const target =
+        lines.find(
+            line =>
+                line.id ===
+                id
+        );
+
+
+    if (!target) {
+
+        return;
+
+    }
+
+
+    if (
+        !confirm(
+            "この線を削除しますか？"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    lines =
+        lines.filter(
+            line =>
+                line.id !==
+                id
+        );
+
+
+    if (
+        currentLineId ===
+        id
+    ) {
+
+        currentLineId =
+            null;
+
+    }
+
+
+    saveData();
+
+    render();
+
+
+    showHelp(
+        "線を削除しました"
+    );
+
+}
+
+
+/* =========================================================
+   SATELLITE
+========================================================= */
+
+document
+    .getElementById(
+        "satelliteButton"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+
+            satelliteMode =
+                !satelliteMode;
+
+
+            if (
+                satelliteMode
+            ) {
+
+
+                if (
+                    map.hasLayer(
+                        normalLayer
+                    )
+                ) {
+
+                    map.removeLayer(
+                        normalLayer
+                    );
+
+                }
+
+
+                satelliteLayer.addTo(
+                    map
+                );
+
+
+                showHelp(
+                    "航空写真に切り替えました"
+                );
+
+
+            } else {
+
+
+                if (
+                    map.hasLayer(
+                        satelliteLayer
+                    )
+                ) {
+
+                    map.removeLayer(
+                        satelliteLayer
+                    );
+
+                }
+
+
+                normalLayer.addTo(
+                    map
+                );
+
+
+                showHelp(
+                    "通常の地図に戻しました"
+                );
+
+            }
+
+        }
+    );
+
+
+/* =========================================================
+   SAVE BUTTON
+========================================================= */
+
+document
+    .getElementById(
+        "saveButton"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+            saveData();
+
+            showHelp(
+                "保存しました"
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   MENU
+========================================================= */
+
+function openMenu() {
+
+    document
+        .getElementById(
+            "menuOverlay"
+        )
+        .classList.add(
+            "show"
+        );
+
+}
+
+
+function closeMenu() {
+
+    document
+        .getElementById(
+            "menuOverlay"
+        )
+        .classList.remove(
+            "show"
+        );
+
+}
+
+
+document
+    .getElementById(
+        "menuButton"
+    )
+    .addEventListener(
+        "click",
+        openMenu
+    );
+
+
+document
+    .getElementById(
+        "menuClose"
+    )
+    .addEventListener(
+        "click",
+        closeMenu
+    );
+
+
+/* =========================================================
+   JSON VIEW
+========================================================= */
+
+function openJsonView() {
+
+
+    document.getElementById(
+        "jsonText"
+    ).value =
+        getCurrentJson();
+
+
+    document.getElementById(
+        "jsonCount"
+    ).textContent =
+
+        `地点 ${points.length}件 / 線 ${lines.length}本`;
+
+
+    document.getElementById(
+        "copyStatus"
+    ).textContent =
+        "";
+
+
+    document
+        .getElementById(
+            "jsonOverlay"
+        )
+        .classList.add(
+            "show"
+        );
+
+}
+
+
+function closeJsonView() {
+
+    document
+        .getElementById(
+            "jsonOverlay"
+        )
+        .classList.remove(
+            "show"
+        );
+
+}
+
+
+document
+    .getElementById(
+        "jsonViewButton"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+            closeMenu();
+
+            openJsonView();
+
+        }
+    );
+
+
+document
+    .getElementById(
+        "jsonClose"
+    )
+    .addEventListener(
+        "click",
+        closeJsonView
+    );
+
+
+/* =========================================================
+   COPY
+========================================================= */
+
+async function copyText(
+    text
+) {
+
+
+    try {
+
+        await navigator.clipboard.writeText(
+            text
+        );
+
+        return true;
+
+    } catch (
+        error
+    ) {
+
+
+        const textarea =
+            document.createElement(
+                "textarea"
+            );
+
+
+        textarea.value =
+            text;
+
+
+        textarea.style.position =
+            "fixed";
+
+
+        textarea.style.opacity =
+            "0";
+
+
+        document.body.appendChild(
+            textarea
+        );
+
+
+        textarea.focus();
+
+        textarea.select();
+
+
+        let success =
+            false;
+
+
+        try {
+
+            success =
+                document.execCommand(
+                    "copy"
+                );
+
+        } catch (
+            e
+        ) {
+
+            success =
+                false;
+
+        }
+
+
+        textarea.remove();
+
+
+        return success;
+
+    }
+
+}
+
+
+/* =========================================================
+   COPY JSON
+========================================================= */
+
+document
+    .getElementById(
+        "copyJsonButton"
+    )
+    .addEventListener(
+        "click",
+        async () => {
+
+
+            const text =
+                document.getElementById(
+                    "jsonText"
+                ).value;
+
+
+            const success =
+                await copyText(
+                    text
+                );
+
+
+            document.getElementById(
+                "copyStatus"
+            ).textContent =
+
+                success
+                    ? "JSONをコピーしました"
+                    : "コピーできませんでした";
+
+        }
+    );
+
+
+/* =========================================================
+   COPY LINES
+========================================================= */
+
+document
+    .getElementById(
+        "copyLinesButton"
+    )
+    .addEventListener(
+        "click",
+        async () => {
+
+
+            const lineData = {
+
+                type:
+                    "route-reconstruction-lines",
+
+                version:
+                    5,
+
+                note:
+                    "手動で配置した線のデータです。",
+
+                lines
+
+            };
+
+
+            const text =
+                JSON.stringify(
+                    lineData,
+                    null,
+                    2
+                );
+
+
+            const success =
+                await copyText(
+                    text
+                );
+
+
+            document.getElementById(
+                "copyStatus"
+            ).textContent =
+
+                success
+                    ? "線のデータをコピーしました"
+                    : "コピーできませんでした";
+
+        }
+    );
+
+
+/* =========================================================
+   APPLY JSON
+========================================================= */
+
+document
+    .getElementById(
+        "jsonApplyButton"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+
+            const text =
+                document.getElementById(
+                    "jsonText"
+                ).value.trim();
+
+
+            if (!text) {
+
+                alert(
+                    "JSONが空です。"
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+
+                const data =
+                    JSON.parse(
+                        text
+                    );
+
+
+                const normalized =
+                    normalizeData(
+                        data
+                    );
+
+
+                if (
+                    !confirm(
+                        `このJSONを読み込みますか？\n\n地点：${normalized.points.length}件\n線：${normalized.lines.length}本\n\n現在のデータは置き換わります。`
+                    )
+                ) {
+
+                    return;
+
+                }
+
+
+                points =
+                    normalized.points;
+
+
+                lines =
+                    normalized.lines;
+
+
+                saveData();
+
+                render();
+
+                closeJsonView();
+
+
+                showHelp(
+                    "JSONからデータを復元しました"
+                );
+
+
+            } catch (
+                error
+            ) {
+
+
+                console.error(
+                    error
+                );
+
+
+                alert(
+                    "JSONの形式が正しくありません。"
+                );
+
+            }
+
+        }
+    );
+
+
+/* =========================================================
+   IMPORT FILE
+========================================================= */
+
+document
+    .getElementById(
+        "importButton"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+            closeMenu();
+
+
+            document
+                .getElementById(
+                    "fileInput"
+                )
+                .click();
+
+        }
+    );
+
+
+/* =========================================================
+   FILE IMPORT
+========================================================= */
+
+document
+    .getElementById(
+        "fileInput"
+    )
+    .addEventListener(
+        "change",
+        event => {
+
+
+            const file =
+                event.target.files[0];
+
+
+            if (!file) {
+
+                return;
+
+            }
+
+
+            const reader =
+                new FileReader();
+
+
+            reader.onload =
+                () => {
+
+
+                    try {
+
+
+                        const data =
+                            JSON.parse(
+                                reader.result
+                            );
+
+
+                        const normalized =
+                            normalizeData(
+                                data
+                            );
+
+
+                        const ok =
+                            confirm(
+                                `JSONを読み込みますか？\n\n地点：${normalized.points.length}件\n線：${normalized.lines.length}本\n\n現在のデータは置き換わります。`
+                            );
+
+
+                        if (!ok) {
+
+                            return;
+
+                        }
+
+
+                        points =
+                            normalized.points;
+
+
+                        lines =
+                            normalized.lines;
+
+
+                        saveData();
+
+                        render();
+
+
+                        showHelp(
+                            "JSONを読み込みました"
+                        );
+
+
+                    } catch (
+                        error
+                    ) {
+
+
+                        console.error(
+                            error
+                        );
+
+
+                        alert(
+                            "JSONを読み込めませんでした。\nファイルの内容を確認してください。"
+                        );
+
+                    }
+
+
+                    event.target.value =
+                        "";
+
+                };
+
+
+            reader.readAsText(
+                file
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   EXPORT JSON
+========================================================= */
+
+document
+    .getElementById(
+        "exportButton"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+
+            const json =
+                getCurrentJson();
+
+
+            const blob =
+                new Blob(
+                    [
+                        json
+                    ],
+                    {
+
+                        type:
+                            "application/json;charset=utf-8"
+
+                    }
+                );
+
+
+            const url =
+                URL.createObjectURL(
+                    blob
+                );
+
+
+            const a =
+                document.createElement(
+                    "a"
+                );
+
+
+            const date =
+                new Date()
+                    .toISOString()
+                    .slice(
+                        0,
+                        10
+                    );
+
+
+            a.href =
+                url;
+
+
+            a.download =
+                `route-reconstruction-${date}.json`;
+
+
+            document.body.appendChild(
+                a
+            );
+
+
+            a.click();
+
+
+            a.remove();
+
+
+            URL.revokeObjectURL(
+                url
+            );
+
+
+            closeMenu();
+
+
+            showHelp(
+                "JSONファイルを書き出しました"
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   CLEAR
+========================================================= */
+
+document
+    .getElementById(
+        "clearButton"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+
+            if (
+                !confirm(
+                    "地点と線をすべて削除しますか？\n\nこの操作は元に戻せません。"
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            points =
+                [];
+
+
+            lines =
+                [];
+
+
+            currentPointId =
+                null;
+
+
+            currentLineId =
+                null;
+
+
+            saveData();
+
+            render();
+
+            closeMenu();
+
+
+            showHelp(
+                "すべて削除しました"
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   CLOSE OVERLAYS
+========================================================= */
+
+document
+    .getElementById(
+        "pointOverlay"
+    )
+    .addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target ===
+                event.currentTarget
+            ) {
+
+                closePointModal();
+
+            }
+
+        }
+    );
+
+
+document
+    .getElementById(
+        "lineOverlay"
+    )
+    .addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target ===
+                event.currentTarget
+            ) {
+
+                closeLineModal();
+
+            }
+
+        }
+    );
+
+
+document
+    .getElementById(
+        "menuOverlay"
+    )
+    .addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target ===
+                event.currentTarget
+            ) {
+
+                closeMenu();
+
+            }
+
+        }
+    );
+
+
+document
+    .getElementById(
+        "jsonOverlay"
+    )
+    .addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target ===
+                event.currentTarget
+            ) {
+
+                closeJsonView();
+
+            }
+
+        }
+    );
+
+
+/* =========================================================
+   PDF MENU
+========================================================= */
+
+function openPdfMenu() {
+
+    document
+        .getElementById(
+            "pdfOverlay"
+        )
+        .classList.add(
+            "show"
+        );
+
+}
+
+
+function closePdfMenu() {
+
+    document
+        .getElementById(
+            "pdfOverlay"
+        )
+        .classList.remove(
+            "show"
+        );
+
+}
+
+
+document
+    .getElementById(
+        "pdfButton"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+            closeMenu();
+
+            openPdfMenu();
+
+        }
+    );
+
+
+document
+    .getElementById(
+        "pdfCancel"
+    )
+    .addEventListener(
+        "click",
+        closePdfMenu
+    );
+
+
+document
+    .getElementById(
+        "pdfOverlay"
+    )
+    .addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target ===
+                event.currentTarget
+            ) {
+
+                closePdfMenu();
+
+            }
+
+        }
+    );
+
+
+/* =========================================================
+   GET ROUTE BOUNDS
+========================================================= */
+
+function getRouteBounds() {
+
+    let bounds =
+        null;
+
+
+    function add(
+        lat,
+        lng
+    ) {
+
+        if (
+            !Number.isFinite(
+                lat
+            ) ||
+            !Number.isFinite(
+                lng
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        const latlng =
+            L.latLng(
+                lat,
+                lng
+            );
+
+
+        if (!bounds) {
+
+            bounds =
+                L.latLngBounds(
+                    latlng,
+                    latlng
+                );
+
+        } else {
+
+            bounds.extend(
+                latlng
+            );
+
+        }
+
+    }
+
+
+    points.forEach(
+        point => {
+
+            add(
+                Number(
+                    point.lat
+                ),
+                Number(
+                    point.lng
+                )
+            );
+
+        }
+    );
+
+
+    lines.forEach(
+        line => {
+
+            if (
+                !Array.isArray(
+                    line.coords
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            line.coords.forEach(
+                coord => {
+
+                    if (
+                        !Array.isArray(
+                            coord
+                        ) ||
+                        coord.length <
+                            2
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    add(
+                        Number(
+                            coord[0]
+                        ),
+                        Number(
+                            coord[1]
+                        )
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+    return bounds;
+
+}
+
+
+/* =========================================================
+   CREATE EXPORT MAP
+========================================================= */
+
+function createExportMap(
+    width,
+    height
+) {
+
+
+    const area =
+        document.getElementById(
+            "printArea"
+        );
+
+
+    area.style.width =
+        width +
+        "px";
+
+
+    area.style.height =
+        height +
+        "px";
+
+
+    area.style.left =
+        "-100000px";
+
+
+    area.style.top =
+        "0";
+
+
+    const oldMap =
+        document.getElementById(
+            "exportMap"
+        );
+
+
+    if (exportMap) {
+
+        try {
+
+            exportMap.remove();
+
+        } catch (
+            error
+        ) {}
+
+        exportMap =
+            null;
+
+    }
+
+
+    oldMap.innerHTML =
+        "";
+
+
+    const newMapDiv =
+        document.createElement(
+            "div"
+        );
+
+
+    newMapDiv.id =
+        "exportMapInner";
+
+
+    newMapDiv.style.width =
+        "100%";
+
+
+    newMapDiv.style.height =
+        "100%";
+
+
+    oldMap.appendChild(
+        newMapDiv
+    );
+
+
+    exportMap =
+        L.map(
+            newMapDiv,
+            {
+
+                zoomControl:
+                    false,
+
+                attributionControl:
+                    false,
+
+                dragging:
+                    false,
+
+                scrollWheelZoom:
+                    false,
+
+                doubleClickZoom:
+                    false,
+
+                boxZoom:
+                    false,
+
+                keyboard:
+                    false,
+
+                touchZoom:
+                    false
+
+            }
+        );
+
+
+    exportNormalLayer =
+        L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+
+                maxZoom:
+                    19,
+
+                crossOrigin:
+                    true
+
+            }
+        );
+
+
+    exportSatelliteLayer =
+        L.tileLayer(
+            "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            {
+
+                maxZoom:
+                    19,
+
+                crossOrigin:
+                    true
+
+            }
+        );
+
+
+    return exportMap;
+
+}
+
+
+/* =========================================================
+   WAIT FOR TILES
+========================================================= */
+
+function waitForTiles(
+    mapObject,
+    timeout
+) {
+
+    return new Promise(
+        resolve => {
+
+
+            let finished =
+                false;
+
+
+            let loaded =
+                0;
+
+
+            const finish =
+                () => {
+
+                    if (
+                        finished
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    finished =
+                        true;
+
+
+                    clearTimeout(
+                        timer
+                    );
+
+
+                    setTimeout(
+                        resolve,
+                        400
+                    );
+
+                };
+
+
+            const timer =
+                setTimeout(
+                    finish,
+                    timeout
+                );
+
+
+            mapObject.eachLayer(
+                layer => {
+
+                    if (
+                        layer instanceof
+                        L.TileLayer
+                    ) {
+
+
+                        const tileCount =
+                            layer.getContainer()
+                                ? layer.getContainer()
+                                    .querySelectorAll(
+                                        "img"
+                                    ).length
+                                : 0;
+
+
+                        if (
+                            tileCount ===
+                            0
+                        ) {
+
+                            finish();
+
+                        }
+
+                    }
+
+                }
+            );
+
+
+            mapObject.once(
+                "load",
+                () => {
+
+                    finish();
+
+                }
+            );
+
+
+            setTimeout(
+                () => {
+
+                    finish();
+
+                },
+                1800
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   DRAW VECTOR OVERLAY
+========================================================= */
+
+function drawExportVectorOverlay(
+    canvas,
+    exportMapObject,
+    showLabels
+) {
+
+
+    const ctx =
+        canvas.getContext(
+            "2d"
+        );
+
+
+    /*
+        線
+    */
+
+    lines.forEach(
+        line => {
+
+
+            if (
+                !Array.isArray(
+                    line.coords
+                ) ||
+                line.coords.length <
+                    2
+            ) {
+
+                return;
+
+            }
+
+
+            ctx.save();
+
+
+            ctx.beginPath();
+
+
+            const first =
+                exportMapObject
+                    .latLngToContainerPoint(
+                        [
+                            Number(
+                                line.coords[0][0]
+                            ),
+                            Number(
+                                line.coords[0][1]
+                            )
+                        ]
+                    );
+
+
+            ctx.moveTo(
+                first.x,
+                first.y
+            );
+
+
+            for (
+                let i = 1;
+                i < line.coords.length;
+                i++
+            ) {
+
+
+                const p =
+                    exportMapObject
+                        .latLngToContainerPoint(
+                            [
+                                Number(
+                                    line.coords[i][0]
+                                ),
+                                Number(
+                                    line.coords[i][1]
+                                )
+                            ]
+                        );
+
+
+                ctx.lineTo(
+                    p.x,
+                    p.y
+                );
+
+            }
+
+
+            ctx.strokeStyle =
+                line.color ||
+                "#1d74f5";
+
+
+            ctx.lineWidth =
+                Number(
+                    line.width
+                ) || 5;
+
+
+            ctx.lineCap =
+                "round";
+
+
+            ctx.lineJoin =
+                "round";
+
+
+            if (
+                line.dash
+            ) {
+
+
+                const dash =
+                    String(
+                        line.dash
+                    )
+                    .split(
+                        /\s+/
+                    )
+                    .map(
+                        Number
+                    )
+                    .filter(
+                        Number.isFinite
+                    );
+
+
+                if (
+                    dash.length
+                ) {
+
+                    ctx.setLineDash(
+                        dash
+                    );
+
+                }
+
+            } else {
+
+                ctx.setLineDash(
+                    []
+                );
+
+            }
+
+
+            ctx.stroke();
+
+
+            ctx.restore();
+
+
+            /*
+                PDF用矢印
+            */
+
+            drawExportArrows(
+                ctx,
+                exportMapObject,
+                line
+            );
+
+        }
+    );
+
+
+    /*
+        地点
+    */
+
+    points.forEach(
+        point => {
+
+
+            const p =
+                exportMapObject
+                    .latLngToContainerPoint(
+                        [
+                            Number(
+                                point.lat
+                            ),
+                            Number(
+                                point.lng
+                            )
+                        ]
+                    );
+
+
+            ctx.save();
+
+
+            ctx.beginPath();
+
+
+            ctx.arc(
+                p.x,
+                p.y,
+                11,
+                0,
+                Math.PI * 2
+            );
+
+
+            ctx.fillStyle =
+                "#ffffff";
+
+
+            ctx.fill();
+
+
+            ctx.lineWidth =
+                4;
+
+
+            ctx.strokeStyle =
+                "#1d74f5";
+
+
+            ctx.stroke();
+
+
+            ctx.restore();
+
+
+            /*
+                ラベル
+            */
+
+            if (
+                showLabels
+            ) {
+
+                drawExportPointLabel(
+                    ctx,
+                    p,
+                    point
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   EXPORT ARROWS
+========================================================= */
+
+function drawExportArrows(
+    ctx,
+    exportMapObject,
+    line
+) {
+
+
+    const coords =
+        line.coords;
+
+
+    if (
+        !Array.isArray(
+            coords
+        ) ||
+        coords.length <
+            2
+    ) {
+
+        return;
+
+    }
+
+
+    const segmentLengths =
+        [];
+
+
+    let totalLength =
+        0;
+
+
+    for (
+        let i = 0;
+        i < coords.length - 1;
+        i++
+    ) {
+
+
+        const a =
+            L.latLng(
+                coords[i][0],
+                coords[i][1]
+            );
+
+
+        const b =
+            L.latLng(
+                coords[i + 1][0],
+                coords[i + 1][1]
+            );
+
+
+        const distance =
+            a.distanceTo(
+                b
+            );
+
+
+        segmentLengths.push(
+            distance
+        );
+
+
+        totalLength +=
+            distance;
+
+    }
+
+
+    if (
+        totalLength <=
+        0
+    ) {
+
+        return;
+
+    }
+
+
+    const arrowCount =
+        Math.max(
+            1,
+            Math.min(
+                8,
+                Math.floor(
+                    totalLength /
+                    180
+                ) + 1
+            )
+        );
+
+
+    for (
+        let n = 1;
+        n <= arrowCount;
+        n++
+    ) {
+
+
+        const targetDistance =
+
+            totalLength *
+
+            (
+                0.15 +
+
+                (
+                    0.70 *
+
+                    (
+                        n /
+                        (
+                            arrowCount +
+                            1
+                        )
+                    )
+                )
+            );
+
+
+        let accumulated =
+            0;
+
+
+        let segmentIndex =
+            0;
+
+
+        for (
+            let i = 0;
+            i < segmentLengths.length;
+            i++
+        ) {
+
+
+            if (
+                accumulated +
+                segmentLengths[i]
+                >=
+                targetDistance
+            ) {
+
+                segmentIndex =
+                    i;
+
+                break;
+
+            }
+
+
+            accumulated +=
+                segmentLengths[i];
+
+        }
+
+
+        const a =
+            L.latLng(
+                coords[
+                    segmentIndex
+                ][0],
+                coords[
+                    segmentIndex
+                ][1]
+            );
+
+
+        const b =
+            L.latLng(
+                coords[
+                    segmentIndex + 1
+                ][0],
+                coords[
+                    segmentIndex + 1
+                ][1]
+            );
+
+
+        const segmentLength =
+            segmentLengths[
+                segmentIndex
+            ];
+
+
+        const ratio =
+            segmentLength > 0
+                ? (
+                    targetDistance -
+                    accumulated
+                ) /
+                segmentLength
+                : 0;
+
+
+        const lat =
+            a.lat +
+            (
+                b.lat -
+                a.lat
+            ) *
+            ratio;
+
+
+        const lng =
+            a.lng +
+            (
+                b.lng -
+                a.lng
+            ) *
+            ratio;
+
+
+        const center =
+            exportMapObject
+                .latLngToContainerPoint(
+                    [
+                        lat,
+                        lng
+                    ]
+                );
+
+
+        const pa =
+            exportMapObject
+                .latLngToContainerPoint(
+                    a
+                );
+
+
+        const pb =
+            exportMapObject
+                .latLngToContainerPoint(
+                    b
+                );
+
+
+        const angle =
+            Math.atan2(
+                pb.y - pa.y,
+                pb.x - pa.x
+            );
+
+
+        const size =
+            Math.max(
+                10,
+                Math.min(
+                    16,
+                    (
+                        Number(
+                            line.width
+                        ) || 5
+                    ) * 2.4
+                )
+            );
+
+
+        ctx.save();
+
+
+        ctx.translate(
+            center.x,
+            center.y
+        );
+
+
+        ctx.rotate(
+            angle
+        );
+
+
+        ctx.beginPath();
+
+
+        ctx.moveTo(
+            size,
+            0
+        );
+
+
+        ctx.lineTo(
+            -size * .65,
+            -size * .55
+        );
+
+
+        ctx.lineTo(
+            -size * .30,
+            0
+        );
+
+
+        ctx.lineTo(
+            -size * .65,
+            size * .55
+        );
+
+
+        ctx.closePath();
+
+
+        ctx.fillStyle =
+            line.color ||
+            "#1d74f5";
+
+
+        ctx.shadowColor =
+            "rgba(0,0,0,.25)";
+
+
+        ctx.shadowBlur =
+            2;
+
+
+        ctx.fill();
+
+
+        ctx.restore();
+
+    }
+
+}
+
+
+/* =========================================================
+   EXPORT POINT LABEL
+========================================================= */
+
+function drawExportPointLabel(
+    ctx,
+    position,
+    point
+) {
+
+
+    let label =
+        "";
+
+
+    if (
+        point.time
+    ) {
+
+        label +=
+            point.time;
+
+    }
+
+
+    if (
+        point.place
+    ) {
+
+
+        if (
+            label
+        ) {
+
+            label +=
+                "  ";
+
+        }
+
+
+        label +=
+            point.place;
+
+    }
+
+
+    if (
+        !label
+    ) {
+
+        return;
+
+    }
+
+
+    ctx.save();
+
+
+    ctx.font =
+        "bold 13px -apple-system,BlinkMacSystemFont,'Segoe UI','Yu Gothic',sans-serif";
+
+
+    ctx.textBaseline =
+        "middle";
+
+
+    const width =
+        ctx.measureText(
+            label
+        ).width;
+
+
+    const boxX =
+        position.x +
+        17;
+
+
+    const boxY =
+        position.y -
+        14;
+
+
+    const boxWidth =
+        width +
+        14;
+
+
+    const boxHeight =
+        28;
+
+
+    ctx.fillStyle =
+        "rgba(255,255,255,.94)";
+
+
+    ctx.beginPath();
+
+
+    if (
+        typeof ctx.roundRect ===
+        "function"
+    ) {
+
+        ctx.roundRect(
+            boxX,
+            boxY,
+            boxWidth,
+            boxHeight,
+            7
+        );
+
+    } else {
+
+        ctx.rect(
+            boxX,
+            boxY,
+            boxWidth,
+            boxHeight
+        );
+
+    }
+
+
+    ctx.fill();
+
+
+    ctx.strokeStyle =
+        "rgba(0,0,0,.12)";
+
+
+    ctx.lineWidth =
+        1;
+
+
+    ctx.stroke();
+
+
+    ctx.fillStyle =
+        "#111827";
+
+
+    ctx.fillText(
+        label,
+        boxX + 7,
+        position.y
+    );
+
+
+    ctx.restore();
+
+}
+
+
+/* =========================================================
+   CAPTURE EXPORT PAGE
+========================================================= */
+
+async function captureExportPage(
+    center,
+    zoom,
+    showLabels,
+    baseType,
+    width,
+    height
+) {
+
+
+    const mapObject =
+        createExportMap(
+            width,
+            height
+        );
+
+
+    mapObject.setView(
+        center,
+        zoom
+    );
+
+
+    /*
+        ベース地図
+    */
+
+    if (
+        baseType ===
+        "satellite"
+    ) {
+
+        exportSatelliteLayer.addTo(
+            mapObject
+        );
+
+    } else {
+
+        exportNormalLayer.addTo(
+            mapObject
+        );
+
+    }
+
+
+    mapObject.invalidateSize();
+
+
+    /*
+        タイル読み込み
+    */
+
+    await waitForTiles(
+        mapObject,
+        5000
+    );
+
+
+    mapObject.invalidateSize();
+
+
+    await new Promise(
+        resolve =>
+            setTimeout(
+                resolve,
+                500
+            )
+    );
+
+
+    /*
+        地図背景をキャプチャ
+    */
+
+    const canvas =
+        await html2canvas(
+            document.getElementById(
+                "printArea"
+            ),
+            {
+
+                backgroundColor:
+                    "#ffffff",
+
+                useCORS:
+                    true,
+
+                allowTaint:
+                    false,
+
+                scale:
+                    1,
+
+                logging:
+                    false,
+
+                imageTimeout:
+                    15000
+
+            }
+        );
+
+
+    /*
+        線・矢印・地点を直接描画
+    */
+
+    drawExportVectorOverlay(
+        canvas,
+        mapObject,
+        showLabels
+    );
+
+
+    /*
+        後始末
+    */
+
+    try {
+
+        mapObject.remove();
+
+    } catch (
+        error
+    ) {}
+
+
+    exportMap =
+        null;
+
+
+    return canvas;
+
+}
+
+
+/* =========================================================
+   PDF EXPORT
+========================================================= */
+
+async function exportDetailedPDF() {
+
+
+    if (
+        points.length === 0 &&
+        lines.length === 0
+    ) {
+
+        alert(
+            "書き出す地点または線がありません。"
+        );
+
+        return;
+
+    }
+
+
+    const bounds =
+        getRouteBounds();
+
+
+    if (
+        !bounds
+    ) {
+
+        alert(
+            "ルート範囲を取得できませんでした。"
+        );
+
+        return;
+
+    }
+
+
+    /*
+        PDF設定
+    */
+
+    const pdf =
+        new window.jspdf.jsPDF(
+            {
+
+                orientation:
+                    "landscape",
+
+                unit:
+                    "mm",
+
+                format:
+                    "a4",
+
+                compress:
+                    true
+
+            }
+        );
+
+
+    /*
+        A4横
+
+        余白 10mm
+
+        地図領域
+    */
+
+    const pageWidth =
+        297;
+
+
+    const pageHeight =
+        210;
+
+
+    const margin =
+        10;
+
+
+    const mapWidthMm =
+        pageWidth -
+        margin * 2;
+
+
+    const mapHeightMm =
+        pageHeight -
+        margin * 2;
+
+
+    /*
+        CSSピクセル
+
+        100mを細かく見るため
+        1ページあたり約1000×650px
+    */
+
+    const captureWidth =
+        1000;
+
+
+    const captureHeight =
+        Math.round(
+            captureWidth *
+            (
+                mapHeightMm /
+                mapWidthMm
+            )
+        );
+
+
+    /*
+        詳細レベル
+
+        Zoom 18
+
+        上五島周辺では
+        約100mを十分細かく確認できる
+        レベル。
+
+        重要なのは、
+        全体を無理やり1枚にしないこと。
+    */
+
+    const zoom =
+        18;
+
+
+    /*
+        中心緯度
+    */
+
+    const center =
+        bounds.getCenter();
+
+
+    /*
+        世界座標へ変換
+    */
+
+    function project(
+        latlng
+    ) {
+
+        return map.project(
+            latlng,
+            zoom
+        );
+
+    }
+
+
+    /*
+        全データのピクセル範囲
+    */
+
+    let minX =
+        Infinity;
+
+
+    let maxX =
+        -Infinity;
+
+
+    let minY =
+        Infinity;
+
+
+    let maxY =
+        -Infinity;
+
+
+    function includeLatLng(
+        lat,
+        lng
+    ) {
+
+
+        const p =
+            project(
+                L.latLng(
+                    lat,
+                    lng
+                )
+            );
+
+
+        minX =
+            Math.min(
+                minX,
+                p.x
+            );
+
+
+        maxX =
+            Math.max(
+                maxX,
+                p.x
+            );
+
+
+        minY =
+            Math.min(
+                minY,
+                p.y
+            );
+
+
+        maxY =
+            Math.max(
+                maxY,
+                p.y
+            );
+
+    }
+
+
+    points.forEach(
+        point => {
+
+            includeLatLng(
+                Number(
+                    point.lat
+                ),
+                Number(
+                    point.lng
+                )
+            );
+
+        }
+    );
+
+
+    lines.forEach(
+        line => {
+
+            line.coords.forEach(
+                coord => {
+
+                    includeLatLng(
+                        Number(
+                            coord[0]
+                        ),
+                        Number(
+                            coord[1]
+                        )
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+    /*
+        余白
+
+        画面端で線や地点が切れないように
+        100px程度追加
+    */
+
+    const exportPadding =
+        140;
+
+
+    minX -=
+        exportPadding;
+
+
+    maxX +=
+        exportPadding;
+
+
+    minY -=
+        exportPadding;
+
+
+    maxY +=
+        exportPadding;
+
+
+    const routeWidth =
+        maxX -
+        minX;
+
+
+    const routeHeight =
+        maxY -
+        minY;
+
+
+    /*
+        1ページの表示領域
+    */
+
+    const pageWorldWidth =
+        captureWidth;
+
+
+    const pageWorldHeight =
+        captureHeight;
+
+
+    const columns =
+        Math.max(
+            1,
+            Math.ceil(
+                routeWidth /
+                pageWorldWidth
+            )
+        );
+
+
+    const rows =
+        Math.max(
+            1,
+            Math.ceil(
+                routeHeight /
+                pageWorldHeight
+            )
+        );
+
+
+    const totalPages =
+        columns *
+        rows;
+
+
+    /*
+        あまりに巨大な場合の安全確認
+    */
+
+    if (
+        totalPages >
+        200
+    ) {
+
+        const proceed =
+            confirm(
+                `このルートはかなり広いため、約${totalPages}ページになります。\n\nこのまま書き出しますか？`
+            );
+
+
+        if (!proceed) {
+
+            return;
+
+        }
+
+    }
+
+
+    /*
+        オプション
+    */
+
+    const baseType =
+        document.querySelector(
+            'input[name="pdfMapType"]:checked'
+        ).value;
+
+
+    const showLabels =
+        document.getElementById(
+            "pdfLabels"
+        ).checked;
+
+
+    /*
+        UI
+    */
+
+    const progress =
+        document.getElementById(
+            "exportProgress"
+        );
+
+
+    const progressBar =
+        document.getElementById(
+            "progressBar"
+        );
+
+
+    const progressText =
+        document.getElementById(
+            "progressText"
+        );
+
+
+    progress.classList.add(
+        "show"
+    );
+
+
+    progressBar.style.width =
+        "0%";
+
+
+    /*
+        PDFタイトル
+    */
+
+    let firstPage =
+        true;
+
+
+    /*
+        ページ作成
+    */
+
+    for (
+        let row = 0;
+        row < rows;
+        row++
+    ) {
+
+
+        for (
+            let col = 0;
+            col < columns;
+            col++
+        ) {
+
+
+            const pageIndex =
+                row *
+                columns +
+                col;
+
+
+            const percent =
+                Math.round(
+                    (
+                        pageIndex /
+                        totalPages
+                    ) *
+                    100
+                );
+
+
+            progressBar.style.width =
+                percent +
+                "%";
+
+
+            progressText.textContent =
+
+                `ページ ${pageIndex + 1} / ${totalPages} を作成中…`;
+
+
+            /*
+                ページ中心の世界座標
+            */
+
+            const centerX =
+                minX +
+                (
+                    col *
+                    pageWorldWidth
+                ) +
+                pageWorldWidth /
+                2;
+
+
+            const centerY =
+                minY +
+                (
+                    row *
+                    pageWorldHeight
+                ) +
+                pageWorldHeight /
+                2;
+
+
+            const centerLatLng =
+                map.unproject(
+                    [
+                        centerX,
+                        centerY
+                    ],
+                    zoom
+                );
+
+
+            /*
+                1ページキャプチャ
+            */
+
+            let canvas;
+
+
+            try {
+
+                canvas =
+                    await captureExportPage(
+                        [
+                            centerLatLng.lat,
+                            centerLatLng.lng
+                        ],
+                        zoom,
+                        showLabels,
+                        baseType,
+                        captureWidth,
+                        captureHeight
+                    );
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    error
+                );
+
+
+                progress.classList.remove(
+                    "show"
+                );
+
+
+                alert(
+                    "PDF用の地図画像を作成できませんでした。\n\n航空写真の場合は、通信状況やタイル画像の読み込み状態によって失敗することがあります。"
+                );
+
+
+                return;
+
+            }
+
+
+            /*
+                PDFへ追加
+            */
+
+            if (!firstPage) {
+
+                pdf.addPage();
+
+            }
+
+
+            firstPage =
+                false;
+
+
+            /*
+                ページ背景
+            */
+
+            pdf.setFillColor(
+                255,
+                255,
+                255
+            );
+
+
+            pdf.rect(
+                0,
+                0,
+                pageWidth,
+                pageHeight,
+                "F"
+            );
+
+
+            /*
+                CanvasをJPEG化
+
+                PNGよりPDF容量を抑える。
+                線は既にCanvas上に描画済み。
+            */
+
+            const imageData =
+                canvas.toDataURL(
+                    "image/jpeg",
+                    0.94
+                );
+
+
+            pdf.addImage(
+                imageData,
+                "JPEG",
+                margin,
+                margin,
+                mapWidthMm,
+                mapHeightMm,
+                undefined,
+                "FAST"
+            );
+
+
+            /*
+                ページ番号
+            */
+
+            pdf.setFontSize(
+                7
+            );
+
+
+            pdf.setTextColor(
+                90,
+                98,
+                112
+            );
+
+
+            pdf.text(
+                `${pageIndex + 1} / ${totalPages}`,
+                pageWidth - margin,
+                pageHeight - 3,
+                {
+                    align:
+                        "right"
+                }
+            );
+
+
+            /*
+                次のページまで少し待つ
+
+                iPad Safariのメモリ負荷を
+                下げるため。
+            */
+
+            await new Promise(
+                resolve =>
+                    setTimeout(
+                        resolve,
+                        80
+                    )
+            );
+
+        }
+
+    }
+
+
+    /*
+        完了
+    */
+
+    progressBar.style.width =
+        "100%";
+
+
+    progressText.textContent =
+        "PDFを保存しています…";
+
+
+    await new Promise(
+        resolve =>
+            setTimeout(
+                resolve,
+                300
+            )
+    );
+
+
+    const date =
+        new Date()
+            .toISOString()
+            .slice(
+                0,
+                10
+            );
+
+
+    const suffix =
+        baseType ===
+            "satellite"
+            ? "satellite"
+            : "map";
+
+
+    pdf.save(
+        `route-reconstruction-100m-${suffix}-${date}.pdf`
+    );
+
+
+    progressText.textContent =
+        `完了：${totalPages}ページ`;
+
+
+    setTimeout(
+        () => {
+
+            progress.classList.remove(
+                "show"
+            );
+
+            closePdfMenu();
+
+
+            showHelp(
+                `詳細PDFを書き出しました（${totalPages}ページ）`
+            );
+
+        },
+        900
+    );
+
+}
+
+
+/* =========================================================
+   START PDF
+========================================================= */
+
+document
+    .getElementById(
+        "pdfStart"
+    )
+    .addEventListener(
+        "click",
+        async () => {
+
+
+            const button =
+                document.getElementById(
+                    "pdfStart"
+                );
+
+
+            button.disabled =
+                true;
+
+
+            button.textContent =
+                "作成中…";
+
+
+            try {
+
+                await exportDetailedPDF();
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    error
+                );
+
+
+                alert(
+                    "PDFの書き出し中にエラーが発生しました。\n\n" +
+                    (
+                        error.message ||
+                        error
+                    )
+                );
+
+            }
+
+
+            button.disabled =
+                false;
+
+
+            button.textContent =
+                "📄 PDFを書き出す";
+
+        }
+    );
+
+
+/* =========================================================
+   ESCAPE
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+
+        if (
+            event.key !==
+            "Escape"
+        ) {
+
+            return;
+
+        }
+
+
+        closePointModal();
+
+        closeLineModal();
+
+        closeMenu();
+
+        closeJsonView();
+
+        closePdfMenu();
+
+
+        if (
+            lineDrawing
+        ) {
+
+            cancelLine();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   INITIAL LOAD
+========================================================= */
+
+loadData();
+
+render();
+
+
+/* =========================================================
+   INITIAL MESSAGE
+========================================================= */
+
+setTimeout(
+    () => {
+
+
+        if (
+            points.length > 0 ||
+            lines.length > 0
+        ) {
+
+
+            showHelp(
+                `保存済みデータを復元しました（地点${points.length}件・線${lines.length}本）`
+            );
+
+
+        } else {
+
+
+            showHelp(
+                "地点・線を自由に配置できます"
+            );
+
+        }
+
+    },
+    700
+);
+
+</script>
+
+</body>
+</html>
